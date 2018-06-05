@@ -32,7 +32,9 @@ ZEGBot(token: tgBotToken).run { result, bot in
 						bot.send(message: "Failed to parse torrent ID from torrent page URL.", to: message)
 						break
 				}
-				print("https://totheglory.im/dl/\(torrentId)/\(ttgTorrentToken)")
+				addTorrent(with: "https://totheglory.im/dl/\(torrentId)/\(ttgTorrentToken)") { result in
+					print(result)
+				}
 			default:
 				break
 			}
