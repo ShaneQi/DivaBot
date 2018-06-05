@@ -8,14 +8,14 @@
 import ZEGBot
 import Foundation
 
+private var transmissionSessionId = ""
+
 func addTorrent(with torrentUrlString: String, completion: ((Result<TorrentAddResponse>) -> Void)?) {
 	var urlRequest = URLRequest(url: URL(string:
 		transmissionRPCScheme + transmissionRPCUsername + ":" + transmissionRPCPassword + "@"
-		+ transmissionRPCHost + "/transmission/rpc")!)
+			+ transmissionRPCHost + ":" + transmissionRPCPort + "/transmission/rpc")!)
 	urlRequest.httpMethod = "POST"
-	urlRequest.addValue(
-		"Q6AydqELygqf76B3aQ3ljR73QcaEzFYNADqbf57iyNNn14Ae",
-		forHTTPHeaderField: "X-Transmission-Session-Id")
+	urlRequest.addValue(transmissionSessionId, forHTTPHeaderField: "X-Transmission-Session-Id")
 	urlRequest.httpBody = """
 		{
 			"method": "torrent-add",
@@ -25,6 +25,16 @@ func addTorrent(with torrentUrlString: String, completion: ((Result<TorrentAddRe
 		}
 		""".data(using: .utf8)
 	let urlSessionTask = URLSession(configuration: .default).dataTask(with: urlRequest) { data, response, error in
+		let urlResponse = response as! HTTPURLResponse
+		guard urlResponse.statusCode != 409 else {
+			if let sessionId = urlResponse.allHeaderFields["X-Transmission-Session-Id"] as? String {
+				transmissionSessionId = sessionId
+				addTorrent(with: torrentUrlString, completion: completion)
+			} else {
+				completion?(.failure(Error.unknown))
+			}
+			return
+		}
 		if let data = data {
 			do {
 				completion?(.success(try JSONDecoder().decode(TorrentAddResponse.self, from: data)))
