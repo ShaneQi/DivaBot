@@ -14,6 +14,7 @@ ZEGBot(token: tgBotToken).run { result, bot in
 	case .success(let update):
 		switch update {
 		case .message(_, let message):
+			guard message.chat.id == tgAdminChatId else { break }
 			guard let text = message.text else { break }
 			var arguments = Arguements(string: text)
 			guard let command = arguments.next() else { break }
