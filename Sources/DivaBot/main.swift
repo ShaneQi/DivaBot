@@ -22,8 +22,8 @@ ZEGBot(token: tgBotToken).run { result, bot in
 				var results = [(url: String, result: String)]()
 				let group = DispatchGroup()
 				for (index, argument) in arguments.enumerated() {
+					group.enter()
 					DispatchQueue.global(qos: .userInitiated).async {
-						group.enter()
 						results.append((argument, ""))
 						guard let url = URL(string: argument) else {
 							results[index].result = "❌ Invalid url."
@@ -41,7 +41,7 @@ ZEGBot(token: tgBotToken).run { result, bot in
 							case .success(.addedTorrent(let name)):
 								results[index].result = ("✅ " + name)
 							case .success(.duplicatedTorrent(let name)):
-								results[index].result = "❎ \(name)"
+								results[index].result = "⚠️ \(name)"
 							case .success(.failure(let message)):
 								results[index].result = "❌ " + message
 							case .failure(let error):
