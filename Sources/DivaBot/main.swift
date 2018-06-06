@@ -19,21 +19,41 @@ ZEGBot(token: tgBotToken).run { result, bot in
 			guard let command = arguments.next() else { break }
 			switch command.lowercased() {
 			case "/ttg":
-				guard let urlString = arguments.next() else {
-					bot.send(message: "Please give a TTG torrent page url.", to: message)
-					break
+				var results = [(url: String, result: String)]()
+				let group = DispatchGroup()
+				for (index, argument) in arguments.enumerated() {
+					DispatchQueue.global(qos: .userInitiated).async {
+						group.enter()
+						results.append((argument, ""))
+						guard let url = URL(string: argument) else {
+							results[index].result = "Invalid url."
+							group.leave()
+							return
+						}
+						guard let torrentIdString = url.pathComponents.last,
+							let torrentId = Int(torrentIdString) else {
+								results[index].result = "No torrent id found."
+								group.leave()
+								return
+						}
+						addTorrent(with: "https://totheglory.im/dl/\(torrentId)/\(ttgTorrentToken)") { result in
+							switch result {
+							case .success(.addedTorrent(let message)), .success(.failure(let message)):
+								results[index].result = message
+							case .success(.duplicatedTorrent(let name)):
+								results[index].result = "[DUP] \(name)"
+							case .failure(let error):
+								results[index].result = error.localizedDescription
+							}
+							group.leave()
+						}
+					}
 				}
-				guard let url = URL(string: urlString) else {
-						bot.send(message: "Please give a valid TTG torrent page url.", to: message)
-						break
-				}
-				guard let torrentIdString = url.pathComponents.last,
-					let torrentId = Int(torrentIdString) else {
-						bot.send(message: "Failed to parse torrent ID from torrent page URL.", to: message)
-						break
-				}
-				addTorrent(with: "https://totheglory.im/dl/\(torrentId)/\(ttgTorrentToken)") { result in
-					print(result)
+				group.wait()
+				if results.isEmpty {
+					bot.send(message: "Please give at least one TTG torrent page url.", to: message)
+				} else {
+					bot.send(message: results.map({ $0.url + "\n" + $0.result }).joined(separator: "\n\n"), to: message)
 				}
 			default:
 				break
@@ -42,6 +62,6 @@ ZEGBot(token: tgBotToken).run { result, bot in
 			break
 		}
 	case .failure(let error):
-		print(error)
+		dump(error)
 	}
 }
