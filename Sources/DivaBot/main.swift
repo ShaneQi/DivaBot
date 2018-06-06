@@ -26,24 +26,26 @@ ZEGBot(token: tgBotToken).run { result, bot in
 						group.enter()
 						results.append((argument, ""))
 						guard let url = URL(string: argument) else {
-							results[index].result = "Invalid url."
+							results[index].result = "❌ Invalid url."
 							group.leave()
 							return
 						}
 						guard let torrentIdString = url.pathComponents.last,
 							let torrentId = Int(torrentIdString) else {
-								results[index].result = "No torrent id found."
+								results[index].result = "❌ No torrent id found."
 								group.leave()
 								return
 						}
 						addTorrent(with: "https://totheglory.im/dl/\(torrentId)/\(ttgTorrentToken)") { result in
 							switch result {
-							case .success(.addedTorrent(let message)), .success(.failure(let message)):
-								results[index].result = message
+							case .success(.addedTorrent(let name)):
+								results[index].result = ("✅ " + name)
 							case .success(.duplicatedTorrent(let name)):
-								results[index].result = "[DUP] \(name)"
+								results[index].result = "❎ \(name)"
+							case .success(.failure(let message)):
+								results[index].result = "❌ " + message
 							case .failure(let error):
-								results[index].result = error.localizedDescription
+								results[index].result = "❌ " + error.localizedDescription
 							}
 							group.leave()
 						}
