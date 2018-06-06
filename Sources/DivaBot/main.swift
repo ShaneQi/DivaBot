@@ -53,9 +53,16 @@ ZEGBot(token: tgBotToken).run { result, bot in
 				}
 				group.wait()
 				if results.isEmpty {
-					bot.send(message: "Please give at least one TTG torrent page url.", to: message)
+					bot.send(message: "⚠️ Please give at least one TTG torrent page url.", to: message)
 				} else {
 					bot.send(message: results.map({ $0.url + "\n" + $0.result }).joined(separator: "\n\n"), to: message)
+				}
+			case "/blog":
+				switch arguments.next()?.lowercased() {
+				case "refresh"?:
+					refreshBlog()
+				default:
+					bot.send(message: "⚠️ Please give arguments.", to: message)
 				}
 			default:
 				break

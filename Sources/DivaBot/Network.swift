@@ -89,3 +89,10 @@ enum Error: Swift.Error {
 	case unknown
 
 }
+
+func refreshBlog() {
+	var urlRequest = URLRequest(url: URL(string: "https://server.shaneqi.com/hooks/rusty_blog")!)
+	urlRequest.httpMethod = "POST"
+	let session = URLSession(configuration: URLSessionConfiguration.default)
+	session.dataTask(with: urlRequest) { _, _, _ in }.resume()
+}
