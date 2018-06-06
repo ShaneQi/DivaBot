@@ -12,14 +12,15 @@ let package = Package(
 			targets: ["DivaBot"]),
 		],
 	dependencies: [
-		.package(url: "https://github.com/shaneqi/ZEGBot", .exactItem(Version(4, 0, 1)))
+		.package(url: "https://github.com/shaneqi/ZEGBot", .exactItem(Version(4, 0, 1))),
+		.package(url: "https://github.com/shaneqi/Arguments", .exactItem(Version(1, 0, 0)))
 	],
 	targets: [
 		// Targets are the basic building blocks of a package. A target can define a module or a test suite.
 		// Targets can depend on other targets in this package, and on products in packages which this package depends on.
 		.target(
 			name: "DivaBot",
-			dependencies: []),
+			dependencies: ["ZEGBot", "Arguments"]),
 		.testTarget(
 			name: "DivaBotTests",
 			dependencies: ["DivaBot"]),
