@@ -20,33 +20,32 @@ ZEGBot(token: tgBotToken).run { result, bot in
 			guard let command = arguments.next() else { break }
 			switch command.lowercased() {
 			case "/ttg":
-				var results = [(url: String, result: String)]()
+				var results = [Int: (url: String, result: String)]()
 				let group = DispatchGroup()
 				for (index, argument) in arguments.enumerated() {
 					group.enter()
 					DispatchQueue.global(qos: .userInitiated).async {
-						results.append((argument, ""))
 						guard let url = URL(string: argument) else {
-							results[index].result = "❌ Invalid url."
+							results[index] = (argument, "❌ Invalid url.")
 							group.leave()
 							return
 						}
 						guard let torrentIdString = url.pathComponents.last,
 							let torrentId = Int(torrentIdString) else {
-								results[index].result = "❌ No torrent id found."
+								results[index] = (argument, "❌ No torrent id found.")
 								group.leave()
 								return
 						}
 						addTorrent(with: "https://totheglory.im/dl/\(torrentId)/\(ttgTorrentToken)") { result in
 							switch result {
 							case .success(.addedTorrent(let name)):
-								results[index].result = ("✅ " + name)
+								results[index] = (argument, ("✅ " + name))
 							case .success(.duplicatedTorrent(let name)):
-								results[index].result = "⚠️ \(name)"
+								results[index] = (argument, "⚠️ \(name)")
 							case .success(.failure(let message)):
-								results[index].result = "❌ " + message
+								results[index] = (argument, "❌ " + message)
 							case .failure(let error):
-								results[index].result = "❌ " + error.localizedDescription
+								results[index] = (argument, "❌ " + error.localizedDescription)
 							}
 							group.leave()
 						}
@@ -56,7 +55,7 @@ ZEGBot(token: tgBotToken).run { result, bot in
 				if results.isEmpty {
 					bot.send(message: "⚠️ Please give at least one TTG torrent page url.", to: message)
 				} else {
-					bot.send(message: results.map({ $0.url + "\n" + $0.result }).joined(separator: "\n\n"), to: message)
+					bot.send(message: results.sorted(by: { $0.key < $1.key }).map({ $0.value.url + "\n" + $0.value.result }).joined(separator: "\n\n"), to: message)
 				}
 			case "/blog":
 				switch arguments.next()?.lowercased() {
