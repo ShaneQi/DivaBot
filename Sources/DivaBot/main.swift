@@ -64,6 +64,15 @@ ZEGBot(token: tgBotToken).run { result, bot in
 				default:
 					bot.send(message: "⚠️ Please give arguments.", to: message)
 				}
+			case "/eastwatch":
+				guard let branch = arguments.next(),
+					let commit = arguments.next() else {
+						bot.send(message: "⚠️ Please give arguments.", to: message)
+						break
+				}
+				createEastwatchBuild(branch: branch, commit: commit) { responseString in
+					bot.send(message: responseString, to: message)
+				}
 			default:
 				break
 			}
