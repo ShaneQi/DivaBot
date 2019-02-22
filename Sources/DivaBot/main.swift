@@ -66,11 +66,16 @@ ZEGBot(token: tgBotToken).run { result, bot in
 				}
 			case "/eastwatch":
 				guard let branch = arguments.next(),
-					let commit = arguments.next() else {
+					let commit = arguments.next(),
+					let configString = arguments.next() else {
 						bot.send(message: "⚠️ Please give arguments.", to: message)
 						break
 				}
-				createEastwatchBuild(branch: branch, commit: commit) { responseString in
+				guard let config = AppCenterConfig(rawValue: configString.lowercased()) else {
+					bot.send(message: "⚠️ Invalid build config parameter.", to: message)
+					break
+				}
+				createEastwatchBuild(config: config, branch: branch, commit: commit) { responseString in
 					bot.send(message: responseString, to: message)
 				}
 			default:

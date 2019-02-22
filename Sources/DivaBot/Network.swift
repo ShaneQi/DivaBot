@@ -97,7 +97,47 @@ func refreshBlog() {
 	session.dataTask(with: urlRequest) { _, _, _ in }.resume()
 }
 
-func createEastwatchBuild(branch: String, commit: String, completion: ((String) -> Void)?) {
+enum AppCenterConfig: String {
+	case production, staging
+}
+
+func createEastwatchBuild(config: AppCenterConfig, branch: String, commit: String, completion: ((String) -> Void)?) {
+	var urlRequest = URLRequest(url: URL(
+		string: "https://api.appcenter.ms/v0.1/apps/shaneqi/eastwatch/branches/\(branch)/config")!)
+	urlRequest.httpMethod = "PUT"
+	urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
+	urlRequest.addValue(appCenterApiToken, forHTTPHeaderField: "X-API-Token")
+	urlRequest.httpBody = {
+		switch config {
+		case .production:
+			return appCenterProductionBuildConfig.data(using: .utf8)
+		case .staging:
+			return appCenterStagingBuildConfig.data(using: .utf8)
+		}
+		} ()
+	let session = URLSession(configuration: URLSessionConfiguration.default)
+	session.dataTask(with: urlRequest) { data, response, _ in
+		let code = (response as? HTTPURLResponse)?.statusCode
+		var responseString = [String]()
+		if code == 200 {
+			createEastwatchBuild(branch: branch, commit: commit, completion: completion)
+		} else {
+			if let code = code {
+				responseString += ["\(code)"]
+			} else {
+				responseString += ["unknown status code"]
+			}
+			if let data = data, let body = String(data: data, encoding: .utf8) {
+				responseString += [body]
+			} else {
+				responseString += ["unknow response body"]
+			}
+			completion?(responseString.joined(separator: "\n"))
+		}
+		}.resume()
+}
+
+private func createEastwatchBuild(branch: String, commit: String, completion: ((String) -> Void)?) {
 	var urlRequest = URLRequest(url: URL(
 		string: "https://api.appcenter.ms/v0.1/apps/shaneqi/eastwatch/branches/\(branch)/builds")!)
 	urlRequest.httpMethod = "POST"
