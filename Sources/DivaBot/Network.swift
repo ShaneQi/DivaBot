@@ -119,6 +119,48 @@ func createAppCenterBuild(
 		var responseString = [String]()
 		if code == 200 {
 			createAppCenterBuild(project: encodedProject, branch: encodedBranch, commit: commit, completion: completion)
+		} else if code == 404 {
+			createAppCenterConfigAndBuild(
+				project: encodedProject, branch: encodedBranch, config: config, commit: commit, completion: completion)
+		} else {
+			if let code = code {
+				responseString += ["\(code)"]
+			} else {
+				responseString += ["unknown status code"]
+			}
+			if let data = data, let body = String(data: data, encoding: .utf8) {
+				responseString += [body]
+			} else {
+				responseString += ["unknow response body"]
+			}
+			completion?(responseString.joined(separator: "\n"))
+		}
+		}.resume()
+}
+
+
+/// <#Description#>
+///
+/// - Parameters:
+///   - project: should be url encoded string
+///   - branch: should be url encoded string
+///   - config: <#config description#>
+///   - commit: <#commit description#>
+///   - completion: <#completion description#>
+private func createAppCenterConfigAndBuild(
+	project: String, branch: String, config: Data, commit: String, completion: ((String) -> Void)?) {
+	var urlRequest = URLRequest(url: URL(
+		string: "https://api.appcenter.ms/v0.1/apps/shaneqi/\(project)/branches/\(branch)/config")!)
+	urlRequest.httpMethod = "POST"
+	urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
+	urlRequest.addValue(appCenterApiToken, forHTTPHeaderField: "X-API-Token")
+	urlRequest.httpBody = config
+	let session = URLSession(configuration: URLSessionConfiguration.default)
+	session.dataTask(with: urlRequest) { data, response, _ in
+		let code = (response as? HTTPURLResponse)?.statusCode
+		var responseString = [String]()
+		if code == 200 {
+			createAppCenterBuild(project: project, branch: branch, commit: commit, completion: completion)
 		} else {
 			if let code = code {
 				responseString += ["\(code)"]
