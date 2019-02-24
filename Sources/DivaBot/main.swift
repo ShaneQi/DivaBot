@@ -64,18 +64,23 @@ ZEGBot(token: tgBotToken).run { result, bot in
 				default:
 					bot.send(message: "⚠️ Please give arguments.", to: message)
 				}
-			case "/eastwatch":
-				guard let branch = arguments.next(),
+			case "/appcenter":
+				guard let project = arguments.next(),
+					let branch = arguments.next(),
 					let commit = arguments.next(),
-					let configString = arguments.next() else {
-						bot.send(message: "⚠️ Please give arguments.", to: message)
+					let config = arguments.next() else {
+						bot.send(
+							message: "⚠️ Invalid arguments (e.g. `/appcenter project branch commit config`).",
+							to: message,
+							parseMode: .markdown)
 						break
 				}
-				guard let config = AppCenterConfig(rawValue: configString.lowercased()) else {
-					bot.send(message: "⚠️ Invalid build config parameter.", to: message)
+				let configFilePath = "AppCenterConfigs/\(project.lowercased())-\(config.lowercased()).json"
+				guard let configData = FileManager.default.contents(atPath: configFilePath) else {
+					bot.send(message: "⚠️ Failed to find config file `\(configFilePath)`.", to: message, parseMode: .markdown)
 					break
 				}
-				createEastwatchBuild(config: config, branch: branch, commit: commit) { responseString in
+				createAppCenterBuild(project: project, branch: branch, commit: commit, config: configData) { responseString in
 					bot.send(message: responseString, to: message)
 				}
 			default:
