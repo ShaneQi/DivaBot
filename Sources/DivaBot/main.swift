@@ -75,7 +75,7 @@ ZEGBot(token: tgBotToken).run { result, bot in
 							parseMode: .markdown)
 						break
 				}
-				let configFilePath = "AppCenterConfigs/\(project.lowercased())-\(config.lowercased()).json"
+				let configFilePath = "AppCenterBuildConfigs/\(project.lowercased())-\(config.lowercased()).json"
 				guard let configData = FileManager.default.contents(atPath: configFilePath) else {
 					bot.send(message: "⚠️ Failed to find config file `\(configFilePath)`.", to: message, parseMode: .markdown)
 					break
