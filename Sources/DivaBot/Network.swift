@@ -97,30 +97,28 @@ func refreshBlog() {
 	session.dataTask(with: urlRequest) { _, _, _ in }.resume()
 }
 
-enum AppCenterConfig: String {
-	case production, staging
-}
-
-func createEastwatchBuild(config: AppCenterConfig, branch: String, commit: String, completion: ((String) -> Void)?) {
+func createAppCenterBuild(
+	project: String, branch: String, commit: String, config: Data, completion: ((String) -> Void)?) {
+	guard let encodedProject = project.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) else {
+		completion?("Failed to encode '\(project)'.")
+		return
+	}
+	guard let encodedBranch = branch.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) else {
+		completion?("Failed to encode '\(branch)'.")
+		return
+	}
 	var urlRequest = URLRequest(url: URL(
-		string: "https://api.appcenter.ms/v0.1/apps/shaneqi/eastwatch/branches/\(branch)/config")!)
+		string: "https://api.appcenter.ms/v0.1/apps/shaneqi/\(encodedProject)/branches/\(encodedBranch)/config")!)
 	urlRequest.httpMethod = "PUT"
 	urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 	urlRequest.addValue(appCenterApiToken, forHTTPHeaderField: "X-API-Token")
-	urlRequest.httpBody = {
-		switch config {
-		case .production:
-			return appCenterProductionBuildConfig.data(using: .utf8)
-		case .staging:
-			return appCenterStagingBuildConfig.data(using: .utf8)
-		}
-		} ()
+	urlRequest.httpBody = config
 	let session = URLSession(configuration: URLSessionConfiguration.default)
 	session.dataTask(with: urlRequest) { data, response, _ in
 		let code = (response as? HTTPURLResponse)?.statusCode
 		var responseString = [String]()
 		if code == 200 {
-			createEastwatchBuild(branch: branch, commit: commit, completion: completion)
+			createAppCenterBuild(project: encodedProject, branch: encodedBranch, commit: commit, completion: completion)
 		} else {
 			if let code = code {
 				responseString += ["\(code)"]
@@ -137,9 +135,16 @@ func createEastwatchBuild(config: AppCenterConfig, branch: String, commit: Strin
 		}.resume()
 }
 
-private func createEastwatchBuild(branch: String, commit: String, completion: ((String) -> Void)?) {
+/// <#Description#>
+///
+/// - Parameters:
+///   - project: should be url encoded string
+///   - branch: should be url encoded string
+///   - commit: <#commit description#>
+///   - completion: <#completion description#>
+private func createAppCenterBuild(project: String, branch: String, commit: String, completion: ((String) -> Void)?) {
 	var urlRequest = URLRequest(url: URL(
-		string: "https://api.appcenter.ms/v0.1/apps/shaneqi/eastwatch/branches/\(branch)/builds")!)
+		string: "https://api.appcenter.ms/v0.1/apps/shaneqi/\(project)/branches/\(branch)/builds")!)
 	urlRequest.httpMethod = "POST"
 	urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
 	urlRequest.addValue(appCenterApiToken, forHTTPHeaderField: "X-API-Token")
