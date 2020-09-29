@@ -103,6 +103,58 @@ do {
 							dump(error)
 						}
 					}
+				case "/appcenterupdate":
+					guard let project = arguments.next(),
+						  let fromBranch = arguments.next(),
+						  let toConfig = arguments.next() else {
+						do {
+							try bot.send(
+								message: """
+								⚠️ Invalid arguments (e.g. `/appcenterupdate eastwatch fromBranchDevelop toConfigStaging xcode-version ...`).
+								available config keys:
+								```
+								certificate-filename
+								certificate-file-id
+								provisioning-profile-filename
+								provisioning-profile-file-id
+								xcode-version
+								extension-provisioning-profile-filename
+								extension-provisioning-profile-file-id
+								extension-target-bundle-id
+								```
+								""",
+								to: message,
+								parseMode: .markdown)
+						} catch {
+							dump(error)
+						}
+						break
+					}
+					var keys = [String]()
+					var key = arguments.next()
+					while key != nil {
+						keys.append(key!)
+						key = arguments.next()
+					}
+					guard !keys.isEmpty else {
+						do {
+							try bot.send(
+								message: "⚠️ No app center build config keys to handle.",
+								to: message,
+								parseMode: .markdown)
+						} catch {
+							dump(error)
+						}
+						break
+					}
+					replaceAppCenterBuild(
+						project: project, fromBranch: fromBranch, toConfig: toConfig, keys: keys) { responseString in
+						do {
+							try bot.send(message: responseString, to: message)
+						} catch {
+							dump(error)
+						}
+					}
 				default:
 					break
 				}
