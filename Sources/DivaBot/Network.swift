@@ -7,6 +7,9 @@
 
 import ZEGBot
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 private var transmissionSessionId = ""
 
