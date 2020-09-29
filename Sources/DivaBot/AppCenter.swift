@@ -101,7 +101,7 @@ func createAppCenterBuild(
 
 func replaceAppCenterBuild(
 	project: String, fromBranch: String, toConfig: String, keys: [String], completion: ((String) -> Void)?) {
-	let targetFilePath = "/Users/shane/Developer/Projects/DivaBot/AppCenterBuildConfigs/\(project.lowercased())-\(toConfig.lowercased()).json"
+	let targetFilePath = appCenterConfigPathPrefix + "AppCenterBuildConfigs/\(project.lowercased())-\(toConfig.lowercased()).json"
 	guard FileManager.default.fileExists(atPath: targetFilePath),
 		  var targetConfig = try? JSONDecoder().decode(
 			AppCenterConfig.self, from: Data(contentsOf: URL(fileURLWithPath: targetFilePath))) else {

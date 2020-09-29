@@ -87,7 +87,7 @@ do {
 						}
 						break
 					}
-					let configFilePath = "AppCenterBuildConfigs/\(project.lowercased())-\(config.lowercased()).json"
+					let configFilePath = appCenterConfigPathPrefix + "AppCenterBuildConfigs/\(project.lowercased())-\(config.lowercased()).json"
 					guard let configData = FileManager.default.contents(atPath: configFilePath) else {
 						do {
 							try bot.send(message: "⚠️ Failed to find config file `\(configFilePath)`.", to: message, parseMode: .markdown)
