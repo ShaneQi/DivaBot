@@ -4,6 +4,6 @@ docker run \
 --name divabot \
 -v `pwd`:/divabot \
 -w /divabot \
-swift:4.1 \
+swift:5.3 \
 /bin/bash -c \
 "swift run"

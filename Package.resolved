@@ -2,21 +2,12 @@
   "object": {
     "pins": [
       {
-        "package": "Arguments",
-        "repositoryURL": "https://github.com/shaneqi/Arguments",
-        "state": {
-          "branch": null,
-          "revision": "2baa99bd66fc49d5fd5519a52e863248f50cc675",
-          "version": "1.0.0"
-        }
-      },
-      {
         "package": "ZEGBot",
-        "repositoryURL": "https://github.com/shaneqi/ZEGBot",
+        "repositoryURL": "https://github.com/shaneqi/ZEGBot.git",
         "state": {
           "branch": null,
-          "revision": "cb889cebb09598720ea33cf4637267c22ecc11ed",
-          "version": "4.0.1"
+          "revision": "d41a54e5da763f4c55b4b6020bdfecdccae872c8",
+          "version": "4.2.6"
         }
       }
     ]
