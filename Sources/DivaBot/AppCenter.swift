@@ -102,87 +102,91 @@ func createAppCenterBuild(
 func replaceAppCenterBuild(
 	project: String, fromBranch: String, toConfig: String, keys: [String], completion: ((String) -> Void)?) {
 	let targetFilePath = appCenterConfigPathPrefix + "AppCenterBuildConfigs/\(project.lowercased())-\(toConfig.lowercased()).json"
-	guard FileManager.default.fileExists(atPath: targetFilePath),
-		  var targetConfig = try? JSONDecoder().decode(
-			AppCenterConfig.self, from: Data(contentsOf: URL(fileURLWithPath: targetFilePath))) else {
+	guard FileManager.default.fileExists(atPath: targetFilePath) else {
 		completion?("The target file \(targetFilePath) doesn't exist.")
 		return
 	}
-	getAppCenterBuildConfig(project: project, branch: fromBranch) { result in
-		switch result {
-		case .failure(let errorMessage):
-			completion?(errorMessage)
-		case .success(let newConfig):
-			var handledKeys = [String]()
-			var unhandledKeys = [String]()
-			var keyPaths: [WritableKeyPath<AppCenterConfig, String>] = []
-			for key in keys {
-				switch key.lowercased() {
-				case "certificate-filename":
-					handledKeys.append(key)
-					keyPaths.append(\AppCenterConfig.toolsets.xcode.certificateFilename)
-				case "certificate-file-id":
-					handledKeys.append(key)
-					keyPaths.append(\AppCenterConfig.toolsets.xcode.certificateFileId)
-				case "provisioning-profile-filename":
-					handledKeys.append(key)
-					keyPaths.append(\AppCenterConfig.toolsets.xcode.provisioningProfileFilename)
-				case "provisioning-profile-file-id":
-					handledKeys.append(key)
-					keyPaths.append(\AppCenterConfig.toolsets.xcode.provisioningProfileFileId)
-				case "xcode-version":
-					handledKeys.append(key)
-					keyPaths.append(\AppCenterConfig.toolsets.xcode.xcodeVersion)
-				case let string where string.starts(with: "extension-"):
-					let extensionKeyPath: WritableKeyPath<AppCenterConfig, String>? = {
-						switch string {
-						case "extension-provisioning-profile-filename":
-							return \AppCenterConfig.toolsets.xcode.appExtensionProvisioningProfileFiles[0].fileName
-						case "extension-provisioning-profile-file-id":
-							return  \AppCenterConfig.toolsets.xcode.appExtensionProvisioningProfileFiles[0].fileId
-						case "extension-target-bundle-id":
-							return  \AppCenterConfig.toolsets.xcode.appExtensionProvisioningProfileFiles[0].targetBundleIdentifier
-						default:
-							return nil
-						}
-					}()
-					if let extensionKeyPath = extensionKeyPath {
-						guard !newConfig.toolsets.xcode.appExtensionProvisioningProfileFiles.isEmpty else {
-							unhandledKeys.append(key)
-							break
-						}
+	do {
+		var targetConfig = try JSONDecoder().decode(
+			AppCenterConfig.self, from: Data(contentsOf: URL(fileURLWithPath: targetFilePath)))
+		getAppCenterBuildConfig(project: project, branch: fromBranch) { result in
+			switch result {
+			case .failure(let errorMessage):
+				completion?(errorMessage)
+			case .success(let newConfig):
+				var handledKeys = [String]()
+				var unhandledKeys = [String]()
+				var keyPaths: [WritableKeyPath<AppCenterConfig, String>] = []
+				for key in keys {
+					switch key.lowercased() {
+					case "certificate-filename":
 						handledKeys.append(key)
-						if targetConfig.toolsets.xcode.appExtensionProvisioningProfileFiles.isEmpty {
-							targetConfig.toolsets.xcode.appExtensionProvisioningProfileFiles.append(
-								AppCenterConfig.Toolsets.Xcode.AppExtensionProvisioningProfileFile(
-									fileId: "",
-									fileName: "",
-									targetBundleIdentifier: ""))
+						keyPaths.append(\AppCenterConfig.toolsets.xcode.certificateFilename)
+					case "certificate-file-id":
+						handledKeys.append(key)
+						keyPaths.append(\AppCenterConfig.toolsets.xcode.certificateFileId)
+					case "provisioning-profile-filename":
+						handledKeys.append(key)
+						keyPaths.append(\AppCenterConfig.toolsets.xcode.provisioningProfileFilename)
+					case "provisioning-profile-file-id":
+						handledKeys.append(key)
+						keyPaths.append(\AppCenterConfig.toolsets.xcode.provisioningProfileFileId)
+					case "xcode-version":
+						handledKeys.append(key)
+						keyPaths.append(\AppCenterConfig.toolsets.xcode.xcodeVersion)
+					case let string where string.starts(with: "extension-"):
+						let extensionKeyPath: WritableKeyPath<AppCenterConfig, String>? = {
+							switch string {
+							case "extension-provisioning-profile-filename":
+								return \AppCenterConfig.toolsets.xcode.appExtensionProvisioningProfileFiles[0].fileName
+							case "extension-provisioning-profile-file-id":
+								return  \AppCenterConfig.toolsets.xcode.appExtensionProvisioningProfileFiles[0].fileId
+							case "extension-target-bundle-id":
+								return  \AppCenterConfig.toolsets.xcode.appExtensionProvisioningProfileFiles[0].targetBundleIdentifier
+							default:
+								return nil
+							}
+						}()
+						if let extensionKeyPath = extensionKeyPath {
+							guard !newConfig.toolsets.xcode.appExtensionProvisioningProfileFiles.isEmpty else {
+								unhandledKeys.append(key)
+								break
+							}
+							handledKeys.append(key)
+							if targetConfig.toolsets.xcode.appExtensionProvisioningProfileFiles.isEmpty {
+								targetConfig.toolsets.xcode.appExtensionProvisioningProfileFiles.append(
+									AppCenterConfig.Toolsets.Xcode.AppExtensionProvisioningProfileFile(
+										fileId: "",
+										fileName: "",
+										targetBundleIdentifier: ""))
+							}
+							targetConfig[keyPath: extensionKeyPath] = newConfig[keyPath: extensionKeyPath]
+						} else {
+							unhandledKeys.append(key)
 						}
-						targetConfig[keyPath: extensionKeyPath] = newConfig[keyPath: extensionKeyPath]
-					} else {
+					default:
 						unhandledKeys.append(key)
 					}
-				default:
-					unhandledKeys.append(key)
+					for keyPath in keyPaths {
+						targetConfig[keyPath: keyPath] = newConfig[keyPath: keyPath]
+					}
 				}
-				for keyPath in keyPaths {
-					targetConfig[keyPath: keyPath] = newConfig[keyPath: keyPath]
-				}
-			}
-			do {
-				let encoder = JSONEncoder()
-				encoder.outputFormatting = [.prettyPrinted]
-				let newData = try encoder.encode(targetConfig)
-				try newData.write(to: URL(fileURLWithPath: targetFilePath))
-				completion?("""
+				do {
+					let encoder = JSONEncoder()
+					encoder.outputFormatting = [.prettyPrinted]
+					let newData = try encoder.encode(targetConfig)
+					try newData.write(to: URL(fileURLWithPath: targetFilePath))
+					completion?("""
 					Handled keys: \(handledKeys)
 					Unhandled keys: \(unhandledKeys)
 					""")
-			} catch {
-				completion?("Failed to replace App Center build config due to error: \(error.localizedDescription)")
+				} catch {
+					completion?("Failed to replace App Center build config due to error: \(error.localizedDescription)")
+				}
 			}
 		}
+	} catch {
+		completion?("Failed to decode target file due to \(error)")
 	}
 }
 
