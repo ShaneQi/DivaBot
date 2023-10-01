@@ -47,7 +47,7 @@ struct AppCenterConfig: Codable {
 			let projectOrWorkspacePath: String
 			let scheme: String
 			var xcodeVersion: String
-			let podfilePath: String
+			let podfilePath: String?
 		}
 		var xcode: Xcode
 	}
